@@ -1,0 +1,20 @@
+FROM node:18-alpine AS base
+WORKDIR /app
+
+FROM base AS deps
+COPY package.json package-lock.json* ./
+RUN npm ci --legacy-peer-deps
+
+FROM base AS builder
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
+RUN npm run build
+
+FROM nginx:alpine AS runtime
+RUN apk add --no-cache curl
+COPY --from=builder /app/dist /usr/share/nginx/html
+COPY nginx.conf /etc/nginx/nginx.conf
+EXPOSE 80
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD curl -f http://localhost/ || exit 1
+CMD ["nginx", "-g", "daemon off;"]

@@ -1,0 +1,136 @@
+version: '3.9'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: udaan-postgres
+    environment:
+      POSTGRES_USER: udaan_user
+      POSTGRES_PASSWORD: udaan_password_secure
+      POSTGRES_DB: udaan_db
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U udaan_user']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - udaan-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: udaan-redis
+    ports:
+      - '6379:6379'
+    command: redis-server --requirepass redis_password
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - udaan-network
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:22.0.0
+    container_name: udaan-keycloak
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin_password
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://postgres:5432/keycloak_db
+      KC_DB_USERNAME: udaan_user
+      KC_DB_PASSWORD: udaan_password_secure
+      KC_PROXY: edge
+    ports:
+      - '8080:8080'
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command:
+      - start-dev
+    networks:
+      - udaan-network
+
+  backend:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.backend
+    container_name: udaan-backend
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      HOST: 0.0.0.0
+      DATABASE_HOST: postgres
+      DATABASE_PORT: 5432
+      DATABASE_USER: udaan_user
+      DATABASE_PASSWORD: udaan_password_secure
+      DATABASE_NAME: udaan_db
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: redis_password
+      KEYCLOAK_URL: http://keycloak:8080
+      KEYCLOAK_REALM: udaan
+      KEYCLOAK_CLIENT_ID: udaan-backend
+      KEYCLOAK_CLIENT_SECRET: backend-secret
+      JWT_SECRET: your_jwt_secret_key_change_in_production
+      LOG_LEVEL: info
+      PROMETHEUS_ENABLED: 'true'
+      PROMETHEUS_PORT: 9090
+      API_BASE_URL: http://localhost:3000
+      CORS_ORIGIN: http://localhost:5173
+    ports:
+      - '3000:3000'
+      - '9090:9090'
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      keycloak:
+        condition: service_started
+    healthcheck:
+      test: ['CMD', 'wget', '--quiet', '--tries=1', '--spider', 'http://localhost:3000/api/health/health']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - udaan-network
+
+  frontend:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.frontend
+    container_name: udaan-frontend
+    environment:
+      VITE_API_BASE_URL: http://localhost:3000/api
+      VITE_APP_NAME: U.D.A.A.N Platform
+      VITE_KEYCLOAK_URL: http://localhost:8080
+      VITE_KEYCLOAK_REALM: udaan
+      VITE_KEYCLOAK_CLIENT_ID: udaan-frontend
+    ports:
+      - '5173:80'
+    depends_on:
+      - backend
+    healthcheck:
+      test: ['CMD', 'wget', '--quiet', '--tries=1', '--spider', 'http://localhost/']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    networks:
+      - udaan-network
+
+volumes:
+  postgres-data:
+  redis-data:
+
+networks:
+  udaan-network:
+    driver: bridge

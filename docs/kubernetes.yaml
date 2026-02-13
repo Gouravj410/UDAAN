@@ -1,0 +1,129 @@
+version: 1
+resources:
+  - kind: Deployment
+    name: udaan-backend
+    spec:
+      replicas: 3
+      selector:
+        matchLabels:
+          app: udaan-backend
+      template:
+        metadata:
+          labels:
+            app: udaan-backend
+        spec:
+          containers:
+            - name: backend
+              image: ghcr.io/udaan/udaan-backend:latest
+              ports:
+                - containerPort: 3000
+              env:
+                - name: NODE_ENV
+                  value: production
+                - name: DATABASE_HOST
+                  valueFrom:
+                    configMapKeyRef:
+                      name: udaan-config
+                      key: db-host
+                - name: REDIS_HOST
+                  valueFrom:
+                    configMapKeyRef:
+                      name: udaan-config
+                      key: redis-host
+                - name: DATABASE_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: udaan-secrets
+                      key: db-password
+              resources:
+                requests:
+                  memory: '256Mi'
+                  cpu: '250m'
+                limits:
+                  memory: '512Mi'
+                  cpu: '500m'
+              livenessProbe:
+                httpGet:
+                  path: /api/health/health
+                  port: 3000
+                initialDelaySeconds: 30
+                periodSeconds: 10
+              readinessProbe:
+                httpGet:
+                  path: /api/health/ready
+                  port: 3000
+                initialDelaySeconds: 10
+                periodSeconds: 5
+
+  - kind: Service
+    name: udaan-backend
+    spec:
+      type: ClusterIP
+      selector:
+        app: udaan-backend
+      ports:
+        - protocol: TCP
+          port: 80
+          targetPort: 3000
+
+  - kind: Deployment
+    name: udaan-frontend
+    spec:
+      replicas: 2
+      selector:
+        matchLabels:
+          app: udaan-frontend
+      template:
+        metadata:
+          labels:
+            app: udaan-frontend
+        spec:
+          containers:
+            - name: frontend
+              image: ghcr.io/udaan/udaan-frontend:latest
+              ports:
+                - containerPort: 80
+              resources:
+                requests:
+                  memory: '128Mi'
+                  cpu: '100m'
+                limits:
+                  memory: '256Mi'
+                  cpu: '200m'
+              livenessProbe:
+                httpGet:
+                  path: /
+                  port: 80
+                initialDelaySeconds: 10
+                periodSeconds: 10
+              readinessProbe:
+                httpGet:
+                  path: /
+                  port: 80
+                initialDelaySeconds: 5
+                periodSeconds: 5
+
+  - kind: Service
+    name: udaan-frontend
+    spec:
+      type: LoadBalancer
+      selector:
+        app: udaan-frontend
+      ports:
+        - protocol: TCP
+          port: 80
+          targetPort: 80
+
+  - kind: ConfigMap
+    name: udaan-config
+    data:
+      db-host: postgres
+      redis-host: redis
+      api-url: http://udaan-backend
+
+  - kind: Secret
+    name: udaan-secrets
+    type: Opaque
+    data:
+      db-password: base64-encoded-password
+      jwt-secret: base64-encoded-secret
