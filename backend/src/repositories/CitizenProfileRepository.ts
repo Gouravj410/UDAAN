@@ -62,7 +62,7 @@ export class CitizenProfileRepository {
   }
 
   async update(id: string, profile: Partial<CitizenProfileEntity>): Promise<CitizenProfileEntity> {
-    await this.repo.update(id, profile);
+    await this.repo.update(id, profile as any);
     const updated = await this.findById(id);
     if (!updated) throw new Error('Citizen profile not found');
     return updated;

@@ -30,13 +30,13 @@ export class AuditLogEntity {
   @Column('varchar')
   entityId!: string;
 
-  @Column('enum', { enum: AuditAction })
-  action!: AuditAction;
 
   @Column('uuid')
   userId!: string;
 
-  @Column('jsonb', { default: {} })
+  @Column('varchar')
+  action!: AuditAction;
+  @Column('simple-json', { nullable: true })
   changes!: Record<string, unknown>;
 
   @Column('varchar', { nullable: true })

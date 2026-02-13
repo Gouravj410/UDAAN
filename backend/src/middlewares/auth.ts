@@ -59,13 +59,14 @@ export function optionalAuthMiddleware(req: Request, res: Response, next: NextFu
 export function rolesMiddleware(...allowedRoles: string[]) {
   return (req: Request, res: Response, next: NextFunction) => {
     if (!req.user) {
-      return res.status(401).json({
+      res.status(401).json({
         success: false,
         error: {
           code: 'UNAUTHORIZED',
           message: 'User not authenticated',
         },
       });
+      return;
     }
 
     const hasRole = req.user.roles?.some((role) => allowedRoles.includes(role));
@@ -77,13 +78,14 @@ export function rolesMiddleware(...allowedRoles: string[]) {
         userRoles: req.user.roles,
       });
 
-      return res.status(403).json({
+      res.status(403).json({
         success: false,
         error: {
           code: 'FORBIDDEN',
           message: 'Insufficient permissions',
         },
       });
+      return;
     }
 
     next();

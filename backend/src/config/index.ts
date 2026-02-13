@@ -43,7 +43,7 @@ export const config = {
 
   api: {
     baseUrl: process.env.API_BASE_URL || 'http://localhost:3000',
-    corsOrigin: process.env.CORS_ORIGIN || 'http://localhost:5173',
+    corsOrigin: process.env.CORS_ORIGIN || (process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test' ? '*' : 'http://localhost:5173'),
   },
 
   ai: {

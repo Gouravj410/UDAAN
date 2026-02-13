@@ -1,5 +1,5 @@
-import { CitizenProfileService } from '../services/CitizenProfileService';
-import { UserService } from '../services/UserService';
+import { CitizenProfileService } from '../src/services/CitizenProfileService';
+import { UserService } from '../src/services/UserService';
 
 describe('CitizenProfileService', () => {
   let profileService: CitizenProfileService;

@@ -17,7 +17,7 @@ export function validateRequest(schema: Joi.Schema) {
 
       logger.warn('Validation error', { details });
 
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         error: {
           code: 'VALIDATION_ERROR',
@@ -25,6 +25,7 @@ export function validateRequest(schema: Joi.Schema) {
           details: { fields: details },
         },
       });
+      return;
     }
 
     req.body = value;
@@ -44,7 +45,7 @@ export function validateQueryParams(schema: Joi.Schema) {
         message: detail.message,
       }));
 
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         error: {
           code: 'VALIDATION_ERROR',
@@ -52,6 +53,7 @@ export function validateQueryParams(schema: Joi.Schema) {
           details: { fields: details },
         },
       });
+      return;
     }
 
     req.query = value;

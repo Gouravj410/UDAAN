@@ -48,7 +48,7 @@ export class DocumentRepository {
   }
 
   async update(id: string, document: Partial<DocumentEntity>): Promise<DocumentEntity> {
-    await this.repo.update(id, document);
+    await this.repo.update(id, document as any);
     const updated = await this.findById(id);
     if (!updated) throw new Error('Document not found');
     return updated;

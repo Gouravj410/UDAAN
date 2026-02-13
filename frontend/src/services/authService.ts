@@ -1,5 +1,8 @@
-import jwtDecode from 'jwt-decode';
+import * as jwtDecodeLib from 'jwt-decode';
 import { JwtPayload } from 'jsonwebtoken';
+
+// jwt-decode may be shipped as CommonJS; ensure we have a callable default export
+const jwtDecode: <T = unknown>(token: string) => T = ((jwtDecodeLib as any).default || jwtDecodeLib) as any;
 
 export const authService = {
   login: async (email: string, password: string): Promise<string> => {

@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { ApplicationError } from '../types';
 import { logger } from '../config/logger';
 
-export function errorHandler(err: Error, req: Request, res: Response, next: NextFunction) {
+export function errorHandler(err: Error, req: Request, res: Response, next: NextFunction): void {
   logger.error('Error occurred', {
     message: err.message,
     stack: err.stack,
@@ -13,7 +13,7 @@ export function errorHandler(err: Error, req: Request, res: Response, next: Next
   });
 
   if (err instanceof ApplicationError) {
-    return res.status(err.statusCode).json({
+    res.status(err.statusCode).json({
       success: false,
       error: {
         code: err.code,
@@ -26,10 +26,11 @@ export function errorHandler(err: Error, req: Request, res: Response, next: Next
         version: '1.0.0',
       },
     });
+    return;
   }
 
   if (err.name === 'ValidationError') {
-    return res.status(400).json({
+    res.status(400).json({
       success: false,
       error: {
         code: 'VALIDATION_ERROR',
@@ -41,6 +42,7 @@ export function errorHandler(err: Error, req: Request, res: Response, next: Next
         version: '1.0.0',
       },
     });
+    return;
   }
 
   res.status(500).json({

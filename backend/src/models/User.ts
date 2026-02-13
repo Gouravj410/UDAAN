@@ -51,19 +51,13 @@ export class UserEntity {
   @Column('varchar', { nullable: true })
   pincode?: string;
 
-  @Column('enum', {
-    enum: UserRole,
-    default: UserRole.CITIZEN,
-  })
+  @Column('varchar', { default: UserRole.CITIZEN })
   role!: UserRole;
 
-  @Column('enum', {
-    enum: UserStatus,
-    default: UserStatus.ACTIVE,
-  })
+  @Column('varchar', { default: UserStatus.ACTIVE })
   status!: UserStatus;
 
-  @Column('jsonb', { nullable: true, default: {} })
+  @Column('simple-json', { nullable: true })
   metadata?: Record<string, unknown>;
 
   @CreateDateColumn()

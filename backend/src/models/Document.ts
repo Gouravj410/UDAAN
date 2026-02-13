@@ -30,13 +30,10 @@ export class DocumentEntity {
   @Column('text')
   documentUrl!: string;
 
-  @Column('enum', {
-    enum: VerificationStatus,
-    default: VerificationStatus.PENDING,
-  })
+  @Column('varchar', { default: VerificationStatus.PENDING })
   verificationStatus!: VerificationStatus;
 
-  @Column('timestamp', { nullable: true })
+  @Column('datetime', { nullable: true })
   verifiedAt?: Date;
 
   @CreateDateColumn()

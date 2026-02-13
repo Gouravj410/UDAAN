@@ -74,7 +74,7 @@ export class UserRepository {
   }
 
   async update(id: string, user: Partial<UserEntity>): Promise<UserEntity> {
-    await this.repo.update(id, user);
+    await this.repo.update(id, user as any);
     const updated = await this.findById(id);
     if (!updated) throw new Error('User not found');
     return updated;
